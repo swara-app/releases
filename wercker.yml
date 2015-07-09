@@ -10,8 +10,12 @@ build:
               REPO="https://github.com/swara-app/swara-server.git"
 
               echo "0. Install dependencies and get into our deployment directory"
+              sudo apt-get purge nodejs npm -y
               sudo apt-get update
-              sudo apt-get install zip unzip npm -y
+              sudo apt-get install python-software-properties python g++ make -y
+              sudo add-apt-repository ppa:chris-lea/node.js -y
+              sudo apt-get update
+              sudo apt-get install zip unzip nodejs -y
               sudo npm install -g grunt-cli
               mkdir deployment && cd $_
 
