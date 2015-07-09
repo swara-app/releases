@@ -9,9 +9,10 @@ build:
               BARE_VERSION=`echo ${VERSION} | cut -c 2-`
               REPO="https://github.com/swara-app/swara-server.git"
 
-              echo "0. Install zip and unzip and get into our deployment directory"
+              echo "0. Install dependencies and get into our deployment directory"
               sudo apt-get update
-              sudo apt-get install zip unzip -y
+              sudo apt-get install zip unzip nodejs -y
+              npm install -g grunt-cli
               mkdir deployment && cd $_
 
               echo "1. Download jq"
