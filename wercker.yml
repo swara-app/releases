@@ -11,7 +11,7 @@ build:
 
               echo "0. Install dependencies and get into our deployment directory"
               sudo apt-get update
-              sudo apt-get install zip unzip nodejs -y
+              sudo apt-get install zip unzip npm -y
               npm install -g grunt-cli
               mkdir deployment && cd $_
 
