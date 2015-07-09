@@ -17,6 +17,7 @@ build:
               sudo apt-get update
               sudo apt-get install zip unzip nodejs -y
               sudo npm install -g grunt-cli
+              sudo chown -R $USER:$GROUP ~/.npm
               mkdir deployment && cd $_
 
               echo "1. Download jq"
