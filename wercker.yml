@@ -7,7 +7,6 @@ build:
               DEPLOY_READY_BRANCH=$(head -n 1 branch)
               VERSION=`echo ${DEPLOY_READY_BRANCH} | cut -d'-' -f 2`
               BARE_VERSION=`echo ${VERSION} | cut -c 2-`
-              MASTER_BRANCH="master"
               REPO="https://github.com/swara-app/swara-server.git"
 
               echo "0. Install zip and unzip and get into our deployment directory"
@@ -19,7 +18,7 @@ build:
               wget "http://stedolan.github.io/jq/download/linux64/jq"
               chmod +x jq
 
-              echo "2. Clone the main repo, set the credentials and checkout the branch with latest version installers"
+              echo "2. Clone the main repo, set up the git configuration and checkout the branch with latest version installers"
               git clone $REPO && cd swara-server
               git config --global user.name "The CI Bot"
               git config --global user.email "swara.app@gmail.com"
@@ -30,53 +29,37 @@ build:
 
               echo "3. Copy the installers into the folder deployment/installers"
               mkdir ../installers && cp releases/* ../installers/
-              mkdir ../installers/win && mkdir ../installers/osx && mkdir ../installers/linux
+              mkdir ../installers/windows && mkdir ../installers/osx && mkdir ../installers/linux
+              mv ../installers/*.exe ../installers/windows/
               mv ../installers/*.dmg ../installers/osx/
-              mv ../installers/*.dmg ../installers/osx/
+              mv ../installers/*.deb ../installers/linux/
 
               echo "4. Check out the master branch and do the version bump"
-              git checkout $MASTER_BRANCH
-              npm install && grunt bump:real
+              git checkout master
+              npm install && grunt bump
+              git commit -asm "Release ${VERSION} [skip ci]"
+              git tag -a ${VERSION} -m "Version ${BARE_VERSION}"
+              git push --tags origin master
 
               echo "5. Zip the installers into the platform-specific installers"
-              echo "6. Create a new release & tag on GitHub for this new version"
-
-              echo "1.3 Copying the new installers to a separate directory"
-              cp -r ./app/installer/* ../../${VERSION}
-              cd ../..
-              echo "1.4 Deleting the git directory, dependecies and previous version installers"
-              rm -rf ${VERSION}/**/.git* ${VERSION}/**/dependencies
-              rm ${VERSION}/linux/flickrdownloadr-${PREVIOUS_VERSION}-linux-installer.run ${VERSION}/linux-x64/flickrdownloadr-${PREVIOUS_VERSION}-0.x86_64.rpm ${VERSION}/linux-x64/flickrdownloadr-${PREVIOUS_VERSION}-linux-x64-installer.run ${VERSION}/linux-x64/flickrdownloadr_${PREVIOUS_VERSION}-0_amd64.deb "${VERSION}/osx/Install flickr downloadr (v${PREVIOUS_VERSION}).dmg" ${VERSION}/windows/flickrdownloadr-${PREVIOUS_VERSION}-windows-installer.exe
-              cd ${VERSION}
-              echo "1.5 Zipping the release assets"
-              zip -r linux-x64.zip ./linux-x64
+              cd ../installers/
               zip -r linux.zip ./linux
               zip -r osx.zip ./osx
               zip -r windows.zip ./windows
-              echo "1.6 Creating the release"
+
+              echo "6. Create a new release & tag on GitHub for this new version"
+              echo "6.1 Creating the release and get the upload url"
               RELEASE_JSON_PAYLOAD=$(printf '{ "tag_name": "%s", "name": "%s" }' $VERSION $VERSION)
               echo "RELEASE_JSON_PAYLOAD: ${RELEASE_JSON_PAYLOAD}"
-              echo "1.7 Uploading the release assets"
-              UPLOAD_URL=$(curl --user ${GH_TOKEN}:x-oauth-basic --request POST --data "${RELEASE_JSON_PAYLOAD}" https://api.github.com/repos/flickr-downloadr/flickr-downloadr-gtk/releases | ../jq -r '.upload_url')
+              UPLOAD_URL=$(curl --user ${GH_TOKEN}:x-oauth-basic --request POST --data "${RELEASE_JSON_PAYLOAD}" https://api.github.com/repos/swara-app/swara-server/releases | ../jq -r '.upload_url')
+              echo "6.2 Uploading the release assets"
               echo "UPLOAD_URL: ${UPLOAD_URL}"
               if [[ ${UPLOAD_URL} != */assets{?name} ]]; then exit 100; fi
               UPLOAD_URL_WITH_NAME=$(echo $UPLOAD_URL | sed 's/{?name}$/\?name=/')
-              curl --request POST --user ${GH_TOKEN}:x-oauth-basic --header "Content-Type:application/zip" --data-binary @linux-x64.zip "${UPLOAD_URL_WITH_NAME}linux-x64.zip"
               curl --request POST --user ${GH_TOKEN}:x-oauth-basic --header "Content-Type:application/zip" --data-binary @linux.zip "${UPLOAD_URL_WITH_NAME}linux.zip"
               curl --request POST --user ${GH_TOKEN}:x-oauth-basic --header "Content-Type:application/zip" --data-binary @osx.zip "${UPLOAD_URL_WITH_NAME}osx.zip"
               curl --request POST --user ${GH_TOKEN}:x-oauth-basic --header "Content-Type:application/zip" --data-binary @windows.zip "${UPLOAD_URL_WITH_NAME}windows.zip"
 
-              echo "4. Update build.number file to the latest version on fd.github.io/${MASTER_BRANCH}"
-              echo -n $BARE_VERSION > app/build.number
-
-              echo "5. Commit and push all changes to GitHub"
-              git config --global user.name "The CI Bot"
-              git config --global user.email "contact.us@flickrdownloadr.com"
-              git commit -asm "Published version ${VERSION} to the website"
-              git push --tags origin $MASTER_BRANCH
-
               echo "6. Delete the deploy branch on GitHub"
+              cd ../swara-server
               git push origin :$DEPLOY_READY_BRANCH
-
-              echo "7. Just keep the build.number file alone for the output directory"
-              cp app/build.number "${WERCKER_OUTPUT_DIR}/"
