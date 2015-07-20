@@ -35,10 +35,6 @@ build:
 
               echo "3. Copy the installers into the folder deployment/installers"
               mkdir ../installers && cp releases/* ../installers/
-              mkdir ../installers/windows && mkdir ../installers/osx && mkdir ../installers/linux
-              mv ../installers/*.exe ../installers/windows/
-              mv ../installers/*.dmg ../installers/osx/
-              mv ../installers/*.deb ../installers/linux/
 
               echo "4. Check out the master branch and do the version bump"
               git checkout master
