@@ -55,7 +55,7 @@ build:
 
               echo "6. Create a new release & tag on GitHub for this new version"
               echo "6.1 Creating the release and get the upload url"
-              RELEASE_JSON_PAYLOAD=$(printf '{ "tag_name": "%s", "name": "%s" }' $VERSION $VERSION)
+              RELEASE_JSON_PAYLOAD=$(printf '{ "tag_name": "%s", "name": "%s", "prerelease": true }' $VERSION $VERSION)
               echo "RELEASE_JSON_PAYLOAD: ${RELEASE_JSON_PAYLOAD}"
               UPLOAD_URL=$(curl --user ${GH_TOKEN}:x-oauth-basic --request POST --data "${RELEASE_JSON_PAYLOAD}" https://api.github.com/repos/swara-app/swara-server/releases | ../jq -r '.upload_url')
               echo "6.2 Uploading the release assets"
